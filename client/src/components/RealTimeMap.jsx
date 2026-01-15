@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// --- CONFIGURATION LEAFLET ---
+// Fix icônes
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -12,268 +11,291 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-// --- COMPOSANTS UTILITAIRES ---
+function LocateButton() {
+  const map = useMap();
+  
+  const locateUser = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          map.flyTo([position.coords.latitude, position.coords.longitude], 16);
+        },
+        null,
+        { enableHighAccuracy: true }
+      );
+    }
+  };
 
-// Bouton de géolocalisation flottant
-function LocateButton({ onLocate }) {
   return (
-    <button
-      onClick={onLocate}
-      className="leaflet-control absolute bottom-24 right-4 z-[900] bg-white p-3 rounded-full shadow-xl text-gray-700 hover:text-orange-600 active:scale-95 transition-all duration-200 border border-gray-100"
-      aria-label="Ma position"
-    >
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    </button>
+    <div className="leaflet-top leaflet-right">
+      <div className="leaflet-control leaflet-bar">
+        <button
+          onClick={locateUser}
+          className="leaflet-control-locate"
+          title="Ma position"
+          style={{
+            width: '44px',
+            height: '44px',
+            fontSize: '20px',
+            background: '#FF6B00',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          📍
+        </button>
+      </div>
+    </div>
   );
 }
 
-// Gestion des événements de carte
-function MapController({ setMapMoving }) {
-  useMapEvents({
-    dragstart: () => setMapMoving(true),
-    dragend: () => setMapMoving(false),
-    zoomstart: () => setMapMoving(true),
-    zoomend: () => setMapMoving(false),
-  });
-  return null;
-}
-
-const RealTimeMap = ({ selectedLine = null, userLocation = null }) => {
+const RealTimeMap = ({ userLocation = null }) => {
   const mapRef = useRef(null);
-  const [userPos, setUserPos] = useState(userLocation || [5.3599517, -4.0082563]); // Default: Abidjan
   const [gbakas, setGbakas] = useState([]);
-  const [mapMoving, setMapMoving] = useState(false);
   const [selectedBus, setSelectedBus] = useState(null);
-  const intervalRef = useRef(null);
 
-  // Données statiques des lignes (Simulées)
+  // Lignes Abidjan
   const abidjanLines = [
-    {
-      id: 'ypg-plateau',
-      name: 'Yopougon - Plateau',
-      color: '#FF6B00',
-      stations: [[5.325, -4.065], [5.335, -4.045], [5.350, -4.025], [5.365, -4.005]]
-    },
-    {
-      id: 'adj-cocody',
-      name: 'Adjamé - Cocody',
-      color: '#10B981',
-      stations: [[5.370, -4.040], [5.365, -4.020], [5.355, -4.010], [5.350, -3.995]]
-    },
-    {
-      id: 't-marcory',
-      name: 'Treichville - Marcory',
-      color: '#3B82F6',
-      stations: [[5.300, -4.010], [5.310, -3.990], [5.320, -3.970]]
-    }
+    { id: 'ypg-plateau', name: 'Yopougon - Plateau', color: '#FF6B00', stations: [
+      [5.325, -4.065], [5.335, -4.045], [5.350, -4.025], [5.365, -4.005]
+    ]},
+    { id: 'adj-cocody', name: 'Adjamé - Cocody', color: '#00B894', stations: [
+      [5.370, -4.040], [5.365, -4.020], [5.355, -4.010], [5.350, -3.995]
+    ]},
+    { id: 't-marcory', name: 'Treichville - Marcory', color: '#0984E3', stations: [
+      [5.300, -4.010], [5.310, -3.990], [5.320, -3.970]
+    ]}
   ];
 
-  // --- LOGIQUE DE SIMULATION ---
+  // Initialiser Gbakas
   useEffect(() => {
-    // Initialisation des bus
     const initialGbakas = [
-      { id: 'GB-01', line: 'ypg-plateau', position: [5.330, -4.055], speed: 40, capacity: 18, driver: 'Koffi', destination: 'Plateau' },
-      { id: 'GB-02', line: 'adj-cocody', position: [5.360, -4.025], speed: 35, capacity: 22, driver: 'Aïcha', destination: 'Cocody' },
-      { id: 'GB-03', line: 't-marcory', position: [5.310, -4.000], speed: 45, capacity: 20, driver: 'Jean', destination: 'Marcory' },
+      { id: 'gb1', line: 'ypg-plateau', position: [5.330, -4.055], speed: 40, driver: 'Koffi', destination: 'Plateau' },
+      { id: 'gb2', line: 'adj-cocody', position: [5.360, -4.025], speed: 35, driver: 'Aïcha', destination: 'Cocody' },
+      { id: 'gb3', line: 't-marcory', position: [5.310, -4.000], speed: 45, driver: 'Jean', destination: 'Marcory' },
+      { id: 'gb4', line: 'ypg-plateau', position: [5.345, -4.015], speed: 30, driver: 'Moussa', destination: 'Plateau' },
     ];
+    
     setGbakas(initialGbakas);
 
-    // Animation fluide
-    intervalRef.current = setInterval(() => {
-      setGbakas(prev => prev.map(gbaka => {
-        const line = abidjanLines.find(l => l.id === gbaka.line);
-        if (!line) return gbaka;
-
-        // Logique simplifiée de déplacement aléatoire vers une station
-        const target = line.stations[Math.floor(Math.random() * line.stations.length)];
-        const latDiff = target[0] - gbaka.position[0];
-        const lngDiff = target[1] - gbaka.position[1];
-        const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff);
-
-        if (distance < 0.001) return gbaka; // Pause à l'arrêt
-
-        return {
-          ...gbaka,
+    // Animation
+    const interval = setInterval(() => {
+      setGbakas(prev => 
+        prev.map(bus => ({
+          ...bus,
           position: [
-            gbaka.position[0] + (latDiff / distance) * 0.0002,
-            gbaka.position[1] + (lngDiff / distance) * 0.0002
+            bus.position[0] + (Math.random() - 0.5) * 0.0005,
+            bus.position[1] + (Math.random() - 0.5) * 0.0005
           ]
-        };
-      }));
-    }, 1000);
+        }))
+      );
+    }, 3000);
 
-    return () => clearInterval(intervalRef.current);
+    return () => clearInterval(interval);
   }, []);
 
-  // --- GESTION GPS ---
-  const handleLocate = () => {
-    if (!navigator.geolocation) {
-      alert("Géolocalisation non supportée");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const newPos = [pos.coords.latitude, pos.coords.longitude];
-        setUserPos(newPos);
-        mapRef.current?.flyTo(newPos, 16, { animate: true, duration: 1.5 });
-      },
-      (err) => console.error(err),
-      { enableHighAccuracy: true }
-    );
-  };
-
-  // --- ICONS PERSONNALISÉES ---
-  const createBusIcon = (lineId, isSelected) => {
+  // Icons
+  const busIcon = (lineId) => {
     const line = abidjanLines.find(l => l.id === lineId);
-    const color = line?.color || '#FF6B00';
-    const size = isSelected ? 48 : 36;
-    
     return L.divIcon({
       html: `
-        <div class="relative transition-all duration-300">
-          <div style="background-color: ${color}; width: ${size}px; height: ${size}px;" 
-               class="rounded-full border-4 border-white shadow-lg flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-1/2 w-1/2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-          </div>
-          ${isSelected ? `<div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-black rounded-full animate-ping"></div>` : ''}
+        <div style="
+          background: ${line?.color || '#FF6B00'};
+          width: 36px;
+          height: 36px;
+          border-radius: 18px;
+          border: 3px solid white;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: bold;
+          font-size: 18px;
+          transform: translate(-50%, -50%);
+        ">
+          🚌
         </div>
       `,
-      className: 'bg-transparent',
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
     });
   };
 
   const userIcon = L.divIcon({
     html: `
-      <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-xl relative">
-        <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-75"></div>
+      <div style="
+        background: #0984E3;
+        width: 34px;
+        height: 34px;
+        border-radius: 17px;
+        border: 4px solid white;
+        box-shadow: 0 3px 12px rgba(9,132,227,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 16px;
+        transform: translate(-50%, -50%);
+      ">
+        👤
       </div>
     `,
-    className: 'bg-transparent',
-    iconSize: [16, 16],
+    className: '',
+    iconSize: [34, 34],
+    iconAnchor: [17, 17]
   });
 
-  // Filtrage
-  const visibleGbakas = selectedLine ? gbakas.filter(g => g.line === selectedLine) : gbakas;
-  const visibleLines = selectedLine ? abidjanLines.filter(l => l.id === selectedLine) : abidjanLines;
-
   return (
-    <div className="relative w-full h-full bg-gray-100 overflow-hidden rounded-xl">
-      {/* HEADER FLOTTANT MOBILE */}
-      <div className="absolute top-4 left-4 right-14 z-[900] pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-xl shadow-lg border border-gray-100 pointer-events-auto inline-block max-w-full">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="font-semibold text-sm text-gray-800 truncate">
-              {selectedLine ? abidjanLines.find(l => l.id === selectedLine)?.name : 'Réseau Abidjan'}
-            </span>
-          </div>
-        </div>
-      </div>
-
+    <div className="w-full h-full">
       <MapContainer
-        ref={mapRef}
-        center={userPos}
+        center={userLocation || [5.3599517, -4.0082563]}
         zoom={13}
-        zoomControl={false}
-        className="w-full h-full z-0"
+        style={{ height: '100%', width: '100%' }}
+        ref={mapRef}
+        zoomControl={true}
+        className="leaflet-touch leaflet-fade-anim"
       >
         <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={19}
         />
-        
-        <MapController setMapMoving={setMapMoving} />
 
-        {/* TRACÉS DES LIGNES */}
-        {visibleLines.map(line => (
-          <Polyline
-            key={line.id}
-            positions={line.stations}
-            pathOptions={{ color: line.color, weight: 6, opacity: 0.6, lineCap: 'round' }}
-          />
-        ))}
+        <LocateButton />
 
-        {/* MARKERS GBAKAS */}
-        {visibleGbakas.map(bus => (
+        {/* Stations */}
+        {abidjanLines.flatMap(line => 
+          line.stations.map((position, idx) => (
+            <Marker
+              key={`${line.id}-${idx}`}
+              position={position}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-bold">{line.name}</h3>
+                  <p className="text-sm text-gray-600">Station {idx + 1}</p>
+                </div>
+              </Popup>
+            </Marker>
+          ))
+        )}
+
+        {/* Gbakas */}
+        {gbakas.map(bus => (
           <Marker
             key={bus.id}
             position={bus.position}
-            icon={createBusIcon(bus.line, selectedBus?.id === bus.id)}
+            icon={busIcon(bus.line)}
             eventHandlers={{
-              click: () => {
-                setSelectedBus(bus);
-                mapRef.current?.flyTo(bus.position, 16, { duration: 1 });
-              },
+              click: () => setSelectedBus(bus)
             }}
-          />
+          >
+            <Popup>
+              <div className="p-3 min-w-[200px]">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center text-white">
+                    🚌
+                  </div>
+                  <div>
+                    <h3 className="font-bold">{bus.id}</h3>
+                    <p className="text-sm text-gray-600">{bus.driver}</p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p>📍 <span className="font-medium">{bus.destination}</span></p>
+                  <p>⚡ <span className="font-medium">{bus.speed} km/h</span></p>
+                  <p>🕐 <span className="font-medium">Prochain arrêt: 3min</span></p>
+                </div>
+                <button className="w-full mt-3 bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium">
+                  📷 Scanner ce Gbaka
+                </button>
+              </div>
+            </Popup>
+          </Marker>
         ))}
 
-        {/* MARKER USER */}
-        <Marker position={userPos} icon={userIcon} />
+        {/* Position utilisateur */}
+        {userLocation && (
+          <Marker position={userLocation} icon={userIcon}>
+            <Popup>
+              <div className="p-2">
+                <h3 className="font-bold">Vous êtes ici</h3>
+                <p className="text-sm text-gray-600">
+                  {userLocation[0].toFixed(5)}, {userLocation[1].toFixed(5)}
+                </p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
       </MapContainer>
 
-      {/* BOUTON LOCALISER */}
-      <LocateButton onLocate={handleLocate} />
-
-      {/* BOTTOM SHEET / INFO PANEL */}
-      {selectedBus ? (
-        <div className="absolute bottom-4 left-4 right-4 z-[1000] animate-in slide-in-from-bottom-10 fade-in duration-300">
-          <div className="bg-white rounded-2xl shadow-2xl p-4 border border-gray-100">
-            <div className="flex justify-between items-start mb-3">
+      {/* Panneau info bus sélectionné */}
+      {selectedBus && (
+        <div className="absolute bottom-24 left-4 right-4 z-[1000]">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 border border-gray-200">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-sm"
-                     style={{ backgroundColor: abidjanLines.find(l => l.id === selectedBus.line)?.color }}>
-                  {selectedBus.id.split('-')[1]}
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white text-xl">
+                  🚌
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900">{selectedBus.driver}</h3>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <span>Vers</span>
-                    <span className="font-medium text-gray-700">{selectedBus.destination}</span>
-                  </p>
+                  <h3 className="font-bold text-gray-900">{selectedBus.id}</h3>
+                  <p className="text-sm text-gray-600">{selectedBus.driver}</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedBus(null)}
-                className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"
+                className="text-gray-400 hover:text-gray-600"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ✕
               </button>
             </div>
             
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <div className="bg-gray-50 p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500">Vitesse</div>
-                <div className="font-bold text-gray-900">{selectedBus.speed} <span className="text-[10px]">km/h</span></div>
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <div className="text-lg font-bold text-orange-600">{selectedBus.speed}</div>
+                <div className="text-xs text-gray-600">km/h</div>
               </div>
-              <div className="bg-gray-50 p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500">Places</div>
-                <div className="font-bold text-gray-900">{selectedBus.capacity}</div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <div className="text-lg font-bold text-blue-600">5</div>
+                <div className="text-xs text-gray-600">min</div>
               </div>
-              <div className="bg-gray-50 p-2 rounded-lg text-center">
-                <div className="text-xs text-gray-500">Arrivée</div>
-                <div className="font-bold text-green-600">5 min</div>
+              <div className="text-center p-2 bg-gray-50 rounded-lg">
+                <div className="text-lg font-bold text-green-600">18/22</div>
+                <div className="text-xs text-gray-600">places</div>
               </div>
             </div>
-
-            <button className="w-full py-3 bg-gray-900 text-white rounded-xl font-medium hover:bg-black transition-colors flex items-center justify-center gap-2">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              Scanner pour payer
+            
+            <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-bold">
+              📍 Suivre ce Gbaka
             </button>
           </div>
         </div>
-      ) : null}
+      )}
+
+      {/* Légende */}
+      <div className="absolute top-24 left-4 z-[1000]">
+        <div className="bg-black/70 backdrop-blur-sm text-white rounded-xl p-3">
+          <h4 className="font-bold mb-2 text-sm">Légende</h4>
+          <div className="space-y-1 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#FF6B00]"></div>
+              <span>Gbakas en mouvement</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+              <span>Stations</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-[#0984E3]"></div>
+              <span>Votre position</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
