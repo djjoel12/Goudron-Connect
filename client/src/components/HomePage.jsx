@@ -57,6 +57,7 @@ const HomePage = () => {
   const [userLocation, setUserLocation] = useState(null);
   const [gbakas, setGbakas] = useState([]);
   const [selectedBus, setSelectedBus] = useState(null);
+  const [showMenu, setShowMenu] = useState(false);
 
   // Lignes Abidjan
   const abidjanLines = [
@@ -165,31 +166,43 @@ const HomePage = () => {
     iconAnchor: [17, 17]
   });
 
+  // Options de navigation
+  const menuOptions = [
+    { id: 'scanner', icon: '📷', label: 'Scanner', color: 'bg-green-500 hover:bg-green-600', route: '/scanner' },
+    { id: 'planner', icon: '🔍', label: 'Recherche', color: 'bg-blue-500 hover:bg-blue-600', route: '/planner' },
+    { id: 'chauffeur', icon: '👨‍✈️', label: 'Chauffeur', color: 'bg-purple-500 hover:bg-purple-600', route: '/chauffeur' },
+    { id: 'coxer', icon: '🏢', label: 'Coxer', color: 'bg-indigo-500 hover:bg-indigo-600', route: '/coxer' },
+  ];
+
   return (
     <div className="h-screen w-full bg-white">
-      {/* Header minimal */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-white/90 backdrop-blur-sm p-4 border-b">
+      {/* Header transparent */}
+      <div className="absolute top-0 left-0 right-0 z-[1000] p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
-              <span className="text-white text-xl">🚌</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Carte Goudron</h1>
-              <p className="text-sm text-gray-600">{gbakas.length} Gbakas actifs</p>
+          <div className="bg-black/40 backdrop-blur-lg rounded-xl p-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+                <span className="text-white text-xl">🚌</span>
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">Goudron</h1>
+                <p className="text-sm text-white/80">{gbakas.length} Gbakas actifs</p>
+              </div>
             </div>
           </div>
+          
+          {/* Menu burger transparent pour mobile */}
           <button
-            onClick={() => navigate('/scanner')}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg font-medium"
+            onClick={() => setShowMenu(!showMenu)}
+            className="bg-black/40 backdrop-blur-lg w-12 h-12 rounded-xl flex items-center justify-center"
           >
-            Scanner
+            <span className="text-white text-xl">{showMenu ? '✕' : '☰'}</span>
           </button>
         </div>
       </div>
 
       {/* Carte principale */}
-      <div className="h-full w-full pt-16">
+      <div className="h-full w-full pt-0">
         <MapContainer
           center={userLocation || [5.3599517, -4.0082563]}
           zoom={13}
@@ -275,106 +288,162 @@ const HomePage = () => {
           )}
         </MapContainer>
 
+        {/* Menu des options - Desktop (à droite, transparent) */}
+        <div className="hidden md:block absolute top-1/2 right-4 transform -translate-y-1/2 z-[1000]">
+          <div className="space-y-3">
+            {menuOptions.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => navigate(option.route)}
+                className="group relative w-14 h-14"
+                title={option.label}
+              >
+                {/* Tooltip */}
+                <div className="absolute right-16 top-1/2 transform -translate-y-1/2 bg-black/80 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  {option.label}
+                  <div className="absolute left-full top-1/2 transform -translate-y-1/2 w-0 h-0 border-t-4 border-b-4 border-l-4 border-t-transparent border-b-transparent border-l-black/80"></div>
+                </div>
+                
+                {/* Bouton principal */}
+                <div className={`w-14 h-14 ${option.color} rounded-xl flex items-center justify-center text-white text-2xl shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-12`}>
+                  {option.icon}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu des options - Mobile (en bas, transparent) */}
+        {showMenu && (
+          <div className="md:hidden absolute bottom-24 left-0 right-0 z-[1000] px-4">
+            <div className="bg-black/60 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
+              <div className="grid grid-cols-4 gap-2">
+                {menuOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      navigate(option.route);
+                      setShowMenu(false);
+                    }}
+                    className="flex flex-col items-center p-2 rounded-xl hover:bg-white/10 transition-all"
+                  >
+                    <div className={`w-12 h-12 ${option.color} rounded-xl flex items-center justify-center text-white text-xl mb-1 shadow-lg`}>
+                      {option.icon}
+                    </div>
+                    <div className="text-xs font-medium text-white">{option.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Panneau info bus sélectionné */}
         {selectedBus && (
-          <div className="absolute bottom-24 left-4 right-4 z-[1000]">
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 border border-gray-200">
+          <div className="absolute bottom-24 left-4 right-4 md:right-auto md:left-4 md:w-80 z-[1000]">
+            <div className="bg-black/80 backdrop-blur-xl rounded-2xl p-4 border border-white/20">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white text-xl">
                     🚌
                   </div>
                   <div>
-                    <h3 className="font-bold text-gray-900">{selectedBus.id}</h3>
-                    <p className="text-sm text-gray-600">{selectedBus.driver}</p>
+                    <h3 className="font-bold text-white">{selectedBus.id}</h3>
+                    <p className="text-sm text-white/80">{selectedBus.driver}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedBus(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-white/60 hover:text-white"
                 >
                   ✕
                 </button>
               </div>
               
               <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="text-center p-2 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-bold text-orange-600">{selectedBus.speed}</div>
-                  <div className="text-xs text-gray-600">km/h</div>
+                <div className="text-center p-2 bg-white/10 rounded-lg">
+                  <div className="text-lg font-bold text-orange-400">{selectedBus.speed}</div>
+                  <div className="text-xs text-white/60">km/h</div>
                 </div>
-                <div className="text-center p-2 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-bold text-blue-600">5</div>
-                  <div className="text-xs text-gray-600">min</div>
+                <div className="text-center p-2 bg-white/10 rounded-lg">
+                  <div className="text-lg font-bold text-blue-400">5</div>
+                  <div className="text-xs text-white/60">min</div>
                 </div>
-                <div className="text-center p-2 bg-gray-50 rounded-lg">
-                  <div className="text-lg font-bold text-green-600">18/22</div>
-                  <div className="text-xs text-gray-600">places</div>
+                <div className="text-center p-2 bg-white/10 rounded-lg">
+                  <div className="text-lg font-bold text-green-400">18/22</div>
+                  <div className="text-xs text-white/60">places</div>
                 </div>
               </div>
               
-              <button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-bold">
-                📍 Suivre ce Gbaka
+              <button 
+                onClick={() => navigate('/scanner')}
+                className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-xl font-bold hover:opacity-90 transition-opacity"
+              >
+                📷 Scanner ce Gbaka
               </button>
             </div>
           </div>
         )}
 
-        {/* Légende */}
+        {/* Légende transparente */}
         <div className="absolute top-24 left-4 z-[1000]">
-          <div className="bg-black/70 backdrop-blur-sm text-white rounded-xl p-3">
+          <div className="bg-black/60 backdrop-blur-xl text-white rounded-xl p-3 border border-white/20 max-w-[160px]">
             <h4 className="font-bold mb-2 text-sm">Légende</h4>
-            <div className="space-y-1 text-xs">
+            <div className="space-y-2 text-xs">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#FF6B00]"></div>
-                <span>Gbakas en mouvement</span>
+                <div className="w-3 h-3 rounded-full bg-[#FF6B00] shadow-lg"></div>
+                <span className="text-white/90">Gbakas</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                <span>Stations</span>
+                <div className="w-2 h-2 rounded-full bg-gray-300 shadow"></div>
+                <span className="text-white/90">Stations</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#0984E3]"></div>
-                <span>Votre position</span>
+                <div className="w-3 h-3 rounded-full bg-[#0984E3] shadow-lg"></div>
+                <span className="text-white/90">Vous</span>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Bouton d'options flottant pour mobile */}
+        {!showMenu && (
+          <div className="md:hidden fixed bottom-24 right-4 z-[1000]">
+            <button
+              onClick={() => setShowMenu(true)}
+              className="w-14 h-14 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center text-white text-2xl shadow-2xl hover:scale-110 transition-transform"
+            >
+              +
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Navigation bottom simplifiée */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-[1000]">
-        <div className="flex justify-around">
-          <button
-            onClick={() => navigate('/planner')}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-orange-600"
-          >
-            <span className="text-2xl">🔍</span>
-            <span className="text-xs mt-1">Recherche</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/chauffeur')}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-orange-600"
-          >
-            <span className="text-2xl">👨‍✈️</span>
-            <span className="text-xs mt-1">Chauffeur</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/scanner')}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-orange-600"
-          >
-            <span className="text-2xl">📷</span>
-            <span className="text-xs mt-1">Scanner</span>
-          </button>
-          
-          <button
-            onClick={() => navigate('/coxer')}
-            className="flex flex-col items-center p-2 text-gray-500 hover:text-orange-600"
-          >
-            <span className="text-2xl">🏢</span>
-            <span className="text-xs mt-1">Coxer</span>
-          </button>
+      {/* Navigation bottom transparente pour mobile */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-[1000] p-3">
+        <div className="bg-black/60 backdrop-blur-xl rounded-2xl p-3 border border-white/20">
+          <div className="flex justify-between items-center">
+            <div className="text-center">
+              <div className="text-white text-lg mb-1">🚌</div>
+              <div className="text-xs font-medium text-white">{gbakas.length}</div>
+              <div className="text-[10px] text-white/60">Gbakas</div>
+            </div>
+            <div className="text-center">
+              <div className="text-white text-lg mb-1">📍</div>
+              <div className="text-xs font-medium text-white">Position</div>
+              <div className="text-[10px] text-white/60">Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-white text-lg mb-1">🏪</div>
+              <div className="text-xs font-medium text-white">12</div>
+              <div className="text-[10px] text-white/60">Stations</div>
+            </div>
+            <div className="text-center">
+              <div className="text-white text-lg mb-1">⚡</div>
+              <div className="text-xs font-medium text-white">98%</div>
+              <div className="text-[10px] text-white/60">À l'heure</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
