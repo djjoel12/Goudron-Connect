@@ -1,108 +1,35 @@
 {
-  "name": "Goudron-Connect",
   "short_name": "Goudron",
-  "description": "La connexion intelligente des Gbakas d'Abidjan - Suivi temps réel, points Data, communauté",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#FF6B00",
-  "orientation": "portrait-primary",
-  "categories": ["navigation", "transport", "utility"],
-  
+  "name": "Goudron-Connect",
+  "description": "La connexion intelligente des Gbakas d'Abidjan",
   "icons": [
     {
-      "src": "/icons/icon-72x72.png",
-      "sizes": "72x72",
+      "src": "logo192.png",
       "type": "image/png",
+      "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-96x96.png",
-      "sizes": "96x96",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-128x128.png",
-      "sizes": "128x128",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-144x144.png",
-      "sizes": "144x144",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-152x152.png",
-      "sizes": "152x152",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/logo512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
-  
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Accueil - Sélection de ligne"
-    },
-    {
-      "src": "/screenshots/map.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Carte temps réel des Gbakas"
-    }
-  ],
-  
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FF6B00",
+  "background_color": "#000000",
+  "orientation": "portrait",
   "shortcuts": [
     {
-      "name": "📡 Scanner un sticker",
-      "short_name": "Scanner",
-      "description": "Gagne des points Data en scannant",
+      "name": "Scanner un sticker",
       "url": "/scanner",
-      "icons": [{ "src": "/icons/scanner.png", "sizes": "96x96" }]
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
     },
     {
-      "name": "🗺️ Voir la carte",
-      "short_name": "Carte",
-      "description": "Suis les Gbakas en temps réel",
-      "url": "/carte",
-      "icons": [{ "src": "/icons/map.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "🚌 Mode Chauffeur",
-      "short_name": "Chauffeur",
-      "description": "Active le partage de position",
+      "name": "Mode Chauffeur",
       "url": "/chauffeur",
-      "icons": [{ "src": "/icons/driver.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "🏢 Mode Coxer",
-      "short_name": "Coxer",
-      "description": "Gère ta gare",
-      "url": "/coxer",
-      "icons": [{ "src": "/icons/coxer.png", "sizes": "96x96" }]
-    }
-  ],
-  
-  "related_applications": [],
-  "prefer_related_applications": false,
-  
-  "protocol_handlers": [
-    {
-      "protocol": "web+goudron",
-      "url": "/open?url=%s"
+      "icons": [{ "src": "logo192.png", "sizes": "192x192" }]
     }
   ]
 }
