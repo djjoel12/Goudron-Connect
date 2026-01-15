@@ -62,7 +62,7 @@ function App() {
 
         {/* Routes */}
         <Routes>
-          {/* Routes existantes TransportTicket */}
+          {/* Routes existantes Goudron-Connect */}
           <Route path="/" element={<HomePage />} />
           <Route path="/register-company" element={<CompanyRegisterForm />} />
           <Route path="/login-company" element={<CompanyLogin />} />

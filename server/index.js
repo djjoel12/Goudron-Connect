@@ -48,7 +48,7 @@ if (fs.existsSync(clientBuildPath)) {
 
 // ===== Routes API =====
 app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", message: "TransportTicket API is running" });
+  res.json({ status: "OK", message: "Goudron-Connect API is running" });
 });
 
 app.use("/api/companies", companyRoutes);

@@ -170,7 +170,7 @@ const getDefaultSeoContent = (departure, arrival, routesData) => {
   const duration = routesData[0]?.estimatedDuration || '5-6 heures';
 
   const fallback = {
-    title: `Bus ${departure} → ${arrival} dès ${minPrice} FCFA | TransportTicket 2025`,
+    title: `Bus ${departure} → ${arrival} dès ${minPrice} FCFA | Goudron-Connect 2025`,
     description: `🚌 Bus ${departure}-${arrival} dès ${minPrice} FCFA • ${duration} • ${companyCount} compagnies • Service conciergerie indépendant • Réservation facile`,
     h1: `Bus ${departure} - ${arrival} : Comparaison ${companyCount} Compagnies`,
     content: `Réservez votre bus entre ${departure} et ${arrival} en toute sérénité. Notre service de conciergerie indépendant compare ${companyCount} compagnies pour vous garantir le meilleur prix et le plus grand confort. Trajet d'environ ${duration}.`

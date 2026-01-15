@@ -129,7 +129,7 @@ const RoutePage = () => {
   const getManualSeo = (dep, arr, routes) => {
     const minPrice = routes.length > 0 ? Math.min(...routes.map(r => r.priceRange?.min || r.price || 0)) : 0;
     return {
-      title: `Bus ${dep} → ${arr} dès ${minPrice} FCFA | TransportTicket`,
+      title: `Bus ${dep} → ${arr} dès ${minPrice} FCFA | Goudron-Connect`,
       h1: `Bus ${dep} - ${arr} : Comparaison et Réservation`,
       description: `Voyagez de ${dep} à ${arr} en bus. ${routes.length} compagnies disponibles dès ${minPrice} FCFA.`,
       content: `Réservez votre billet de bus ${dep} ${arr} au meilleur prix avec notre service de conciergerie.`
@@ -321,7 +321,7 @@ const RoutePage = () => {
               ))}
 
               <div className="bg-white bg-opacity-80 backdrop-blur-sm rounded-xl p-4 mt-6 text-sm text-slate-600 text-center">
-                TransportTicket est un service indépendant. Les prix peuvent varier selon la saison.
+                Goudron-Connect est un service indépendant. Les prix peuvent varier selon la saison.
               </div>
             </div>
 
